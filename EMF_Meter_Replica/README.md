@@ -1,7 +1,10 @@
 # EMF Meter Replica
 
-<img src="img/EMF_Meter_PCB_f.jpg" width="20%">
-<img src="img/EMF_Meter_PCB_b.jpg" width="20%">
+**Blank PCB**
+<img src="img/EMF_Meter_PCB_f.jpg" width="20%">  <img src="img/EMF_Meter_PCB_b.jpg" width="20%">
+
+**Example of Assembled EMF Meter**
+<img src="img/EMF_Meter_9v_5cap_f.jpg" width="20%">  <img src="img/EMF_Meter_AA_4cap_b.jpg" width="20%">
 
 Here is the documentation and support files for building and using the Supernatural EMF Meter Replica. 
 To assemble this circuit board you must be comfortable working with and soldering electronic parts.
