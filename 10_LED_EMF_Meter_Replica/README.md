@@ -2,7 +2,7 @@
 
 **Blank PCB**
 
-<img src="img/10_LED_EMF_PCB_f.jpg" width="20%">  <img src="img/10_LED_EMF_PCB_b.jpg" width="20%">
+<img src="img/10_LED_EMF_PCB_f.jpg" width="15.5%">  <img src="img/10_LED_EMF_PCB_b.jpg" width="15%">
 
 **Example of Assembled EMF Meter**
 
