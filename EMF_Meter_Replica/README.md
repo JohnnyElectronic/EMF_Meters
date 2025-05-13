@@ -55,6 +55,8 @@ Check out the build document for more details.
 
 -[3D files](3D/)
 
+-[MP3 files](mp3/)
+
 
 ## Licensing
 
