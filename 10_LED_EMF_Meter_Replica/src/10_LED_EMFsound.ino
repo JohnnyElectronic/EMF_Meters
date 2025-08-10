@@ -2,7 +2,7 @@
 Supernatural 10 LED EMF Meter Replica
 
 EMF ATTiny85 Code
-Release: 1.0
+Release: 1.0 (Label: EMF / 10r1)
 
 Johnny Electronic
 https://github.com/JohnnyElectronic
@@ -35,6 +35,8 @@ DFPlayer - A Mini MP3 Player For Arduino
 
  1.Connection and Diagram can be found here
  <https://www.dfrobot.com/wiki/index.php/DFPlayer_Mini_SKU:DFR0299#Connection_Diagram>
+
+ 2. The DF files used in this version are a custom creation.
 *******************************************************************************************/
 
 #include "DFPlayer.h"
@@ -140,7 +142,7 @@ int queryVal;
 
 // EMF Meter programmed sequences
 // Set EMF Level, Duration, and Sound file play or not.
-const int maxProg = 3;            // Maximum number of programs used
+const int maxProg = 5;            // Maximum number of programs used
 
 struct emfProg {
   int emfLevel;
@@ -148,11 +150,27 @@ struct emfProg {
   bool sound;
 };
 
-// Program with meter level (0-158 | MAX_METER_LVL, 3v max) and duration (ms)
+// Program with meter level (0-158 | MAX_METER_LVL, 3v max), duration (ms), Sound Enable/Disable
+// EMF_METER_0   - Plays end tone, 0.282s max
+// EMF_METER_1   - Plays start tone, 0.238s max
+// EMF_METER_2-3 - Plays low tone, 0.238s max
+// EMF_METER_4+  - Plays high tone, 1.435s max
+// 
+// Make duration of last sound shorter than needed to prevent sound repeat.
+// 
+// Update maxProg value when adding or deleting sequences
 
-// Program 1 (Highs,Lows,End)
-// 12 steps
+// Program 1 (Single High/End)
+// 3 steps
 emfProg emfProg1 [] = {
+  {EMF_METER_1, 200, 1},    // Start Tone
+  {EMF_METER_5, 1400, 1},   // High Tone 
+  {EMF_METER_0, 100, 1},    // End Tone, Make duration of last sound shorter than needed to prevent sound repeat.  
+};
+
+// Program 2 (Highs,Lows,End)
+// 12 steps
+emfProg emfProg2 [] = {
   {EMF_METER_1, 200, 1},    // Start Tone
   {EMF_METER_3, 200, 0},    // Display only
   {EMF_METER_5, 1000, 1},   // High Tone
@@ -164,18 +182,10 @@ emfProg emfProg1 [] = {
   {EMF_METER_5, 1000, 1},   // High Tone
   {EMF_METER_3, 200, 1},    // Low Tone
   {EMF_METER_2, 200, 0},    // Display only
-  {EMF_METER_0, 150, 1}     // End Tone
+  {EMF_METER_0, 100, 1}     // End Tone
 };
 
-// Program 2 (Single High/End)
-// 3 steps
-emfProg emfProg2 [] = {
-  {EMF_METER_1, 150, 1},    // Start Tone
-  {EMF_METER_5, 2000, 1},   // High Tone 
-  {EMF_METER_0, 150, 1},    // End Tone  
-};
-
-// Program 2 (High,Low,High,End)
+// Program 3 (High,Low,High,End)
 // 10 steps
 emfProg emfProg3 [] = {
   {EMF_METER_1, 150, 1},    // Start Tone 
@@ -187,7 +197,30 @@ emfProg emfProg3 [] = {
   {EMF_METER_4, 500, 1},    // High Tone  
   {EMF_METER_5, 2000, 1},   // High Tone 
   {EMF_METER_2, 200, 0},    // Display only
-  {EMF_METER_0, 150, 1}     // Display only   
+  {EMF_METER_0, 100, 1}     // End Tone   
+};
+
+// Program 4 (Single Mid/Low/End)
+// 4 steps
+emfProg emfProg4 [] = {
+  {EMF_METER_1, 200, 1},    // Start Tone
+  {EMF_METER_2, 200, 1},    // Low Tone 
+  {EMF_METER_3, 200, 1},    // Mid Tone 
+  {EMF_METER_0, 100, 1},    // End Tone  
+};
+
+// Program 5 (Lows/End)
+// 9 steps
+emfProg emfProg5 [] = {
+  {EMF_METER_1, 150, 1},    // Start Tone
+  {EMF_METER_2, 150, 1},    // Low Tone 
+  {EMF_METER_3, 150, 1},    // Low Tone 
+  {EMF_METER_0, 150, 1},    // End Tone  
+  {EMF_METER_0, 500, 0},    // Pause  500 ms                            
+  {EMF_METER_1, 150, 1},    // Start Tone
+  {EMF_METER_2, 150, 1},    // Low Tone 
+  {EMF_METER_3, 150, 1},    // Low Tone 
+  {EMF_METER_0, 100, 1},    // End Tone  
 };
 
 /* Sets the state of the Program (PROG) LED to show when a program 
@@ -353,15 +386,26 @@ void loop()
             analogWrite(METER_PIN,setEMFlevel);
             pinMode(METER_PIN, INPUT);
         } else {
+
             // Short press, run through program
-            if (lastProgValue == 1) {
-                runProgram (emfProg1, 12);
-            } 
-            else if (lastProgValue == 2) {
-                runProgram (emfProg2, 3);
-            } 
-            else if (lastProgValue == 3) {
-                runProgram (emfProg3, 10);
+            switch (lastProgValue) {
+              case 1:
+                  runProgram (emfProg1, 3);
+                  break;
+              case 2:
+                  runProgram (emfProg2, 12);
+                  break;
+              case 3:
+                  runProgram (emfProg3, 10);
+                  break;
+              case 4:
+                  runProgram (emfProg4, 4);
+                  break;
+              case 5:
+                  runProgram (emfProg5, 9);
+                  break;
+              default:
+                  break;
             }
 
             lastProgValue++;
