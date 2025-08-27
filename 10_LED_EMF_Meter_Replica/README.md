@@ -2,11 +2,11 @@
 
 **Blank PCB**
 
-<img src="img/10_LED_EMF_PCB_f.jpg" width="15.5%">  <img src="img/10_LED_EMF_PCB_b.jpg" width="15%">
+<img src="r1/img/10_LED_EMF_PCB_f.jpg" width="15.5%">  <img src="r1/img/10_LED_EMF_PCB_b.jpg" width="15%">
 
 **Example of Assembled EMF Meter**
 
-<img src="img/10_LED_Assembled_f.jpg" width="20%">  <img src="img/10_LED_Assembled_b1.jpg" width="20%">
+<img src="r1/img/10_LED_Assembled_f.jpg" width="20%">  <img src="r1/img/10_LED_Assembled_b1.jpg" width="20%">
 
 Here is the documentation and support files for the Supernatural 10 LED EMF Meter Replica that Olivia used in season 4 episode 2. 
 To assemble this circuit board you must be comfortable working with and soldering electronic parts.
@@ -33,6 +33,8 @@ The ATTiny85 is socketed and can be reprogrammed if needed.
 
 ## Purchasing
 [Visit my Tindie Store](https://www.tindie.com/stores/johnnyelectronic/)
+
+<a href="https://www.tindie.com/stores/johnnyelectronic/?ref=offsite_badges&utm_source=sellers_JohnyElectronic&utm_medium=badges&utm_campaign=badge_medium"><img src="https://d2ss6ovg47m0r5.cloudfront.net/badges/tindie-mediums.png" alt="I sell on Tindie" width="150" height="78"></a>
 
 
 ## Directories
