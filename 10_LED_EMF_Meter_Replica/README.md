@@ -10,6 +10,8 @@
 
 Here is the documentation and support files for the Supernatural 10 LED EMF Meter Replica that Olivia used in season 4 episode 2. 
 To assemble this circuit board you must be comfortable working with and soldering electronic parts.
+
+Revision 1 (r1)
 A partial build video is available on my YouTube site. This meter is built on a perfboard so assembly is at the discreation of the hunter (Ah, builder).
 A schematic is available along with a Bill of Materials (BOM). 
 
@@ -35,15 +37,27 @@ The ATTiny85 is socketed and can be reprogrammed if needed.
 
 ## Directories
 
--[Schematics](schematics/)
+### Version r1
 
--[Documents](doc/)
+-[Schematics](r1/schematics/)
 
--[Images](img/)
+-[Documents](r1/doc/)
 
--[Source code](src/)
+-[Images](r1/img/)
 
--[3D files](3D/)
+-[Source code](r1/src/)
+
+-[3D files](r1/3D/)
+
+### Version r2
+
+-[Schematics](r2/schematics/)
+
+-[Documents](r2/doc/)
+
+-[Images](r2/img/)
+
+-[Source code](r2/src/)
 
 
 ## Licensing
