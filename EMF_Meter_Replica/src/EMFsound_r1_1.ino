@@ -2,7 +2,9 @@
 Supernatural EMF Meter Replica
 
 EMF ATTiny85 Code
-Release: 1.0 (Label: EMF / 3v r1)
+Release: 1.1 (Label: EMF / r1.1)
+
+Compatible with PCB Version r-1
 
 Johnny Electronic
 https://github.com/JohnnyElectronic
@@ -136,7 +138,7 @@ SoftwareSerial dfpSerial (DFP_RX_PIN, DFP_TX_PIN); // RX, TX
 #define EMF_LEVEL_LOW   250    /* Set to 110 for 1.5v scale or 250 for 3v scale (Approximatley LED 2) */
 #define EMF_LEVEL_HIGH  440    /* Set to 200 for 1.5v scale or 440 for 3v scale (Approximatley LED 3 1/2) */
 
-#define EMF_TONE_STEADYL_DURATION  1300    /* Maximum time until replay */   
+#define EMF_TONE_STEADYL_DURATION  1200    /* Maximum time until replay */   
 
 #define EMF_AUDIO_LEVEL 15
 const int sensorPin = SENSOR_PIN; // select the input pin for the VU level
@@ -150,6 +152,7 @@ int meterOutputValue = 0;         // variable to store the converted meter value
 int lastSensorValue = 0;          // variable to store the last value coming from the sensor
 unsigned long emfTimer = 0;       // Delay timer
 unsigned long emfHighTimer = 0;   // Delay timer
+bool emfHighZone = false;         // Tracks if max EMF levels
 
 #ifdef DFP_DEBUG
 int queryVal;
@@ -241,8 +244,9 @@ void loop()
     #ifdef EMF_DEBUG
     lastMP3value = EMF_TONE_START;
     #endif
-
         } /* end if EMF_DETECT */
+
+        emfHighZone = false;
       } else if (emfDetected == EMF_FOUND) {
         // Low detection state
         if (sensorValue <= EMF_LEVEL_LOW) {
@@ -254,6 +258,7 @@ void loop()
     #endif
 
           emfDetected = EMF_DETECT;  /* Reset back to detect state */
+          emfHighZone = false;
         } else if ((sensorValue > EMF_LEVEL_LOW) && (sensorValue < EMF_LEVEL_HIGH)) {
           // Low steady detection state
           if (sensorValue >= lastSensorValue) {
@@ -270,18 +275,22 @@ void loop()
     #ifdef EMF_DEBUG
     lastMP3value = EMF_TONE_LOW;
     #endif
-
+    
+          emfHighZone = false;
         } else {
           /* High detection state
             Check busy line - if still playing skip or if not play again 
             DFP_BUSY_PIN is active low on busy state */
+            if (!emfHighZone) {
+                emfHighTimer = millis();
+                emfHighZone = true;
+            }
 
-          if (digitalRead(DFP_BUSY_PIN)) {
-            dfpPlayTrackMP3(EMF_TONE_STEADYL);
-#ifdef EMF_DEBUG
-            lastMP3value = EMF_TONE_STEADYL;
-#endif
-          } // end if DFP_BUSY_PIN
+            if (digitalRead(DFP_BUSY_PIN) || ((millis() - emfHighTimer) > EMF_TONE_STEADYL_DURATION))  {
+                // Replay just under sound file play length, slightly faster than using busy pin
+                dfpPlayTrackMP3(EMF_TONE_STEADYL);
+                emfHighTimer = millis();
+            } // end if DFP_BUSY_PIN / Timer Check
         } // end if High Level
       } // end if EMF_FOUND 
       
