@@ -40,12 +40,12 @@ DFPlayer - A Mini MP3 Player For Arduino
 *******************************************************************************************/
 
 #include "DFPlayer.h"
-#include "DFPlayer.h"
+#include <EEPROM.h>
 
 //#define DFP_DEBUG     /* Enables display of received data for query requests to Serial, Nano/ATTINY1604 only */
 
 //#define NANO
-#define ATTINY804
+#define ATTINY1604
 //#define ATTINY85
 
 // Not all pins on the Mega and Mega 2560 boards support change interrupts, 
@@ -66,9 +66,11 @@ DFPlayer - A Mini MP3 Player For Arduino
 #define ENC_SW2_PIN   6     // D6, Pin 8, BCD 2
 #define ENC_SW4_PIN   5     // D5, Pin 7, BCD 4
 #define ENC_SW8_PIN   4     // D4, Pin 6, BCD 8
+
+#define RANDOM_AIN    A4    // Used to set a random seed
 #endif
 
-// Attny804/1604 Pinouts
+// Attny1604 Pinouts
 // Use pins X and X to communicate with DFPlayer Mini
 // ---------------------------------------------------------
 // ATTny85: AVR_ATtiny85
@@ -87,10 +89,10 @@ DFPlayer - A Mini MP3 Player For Arduino
 // External interrupt on all general purpose pins
 // 
 
-#ifdef ATTINY804
+#ifdef ATTINY1604
 #define DFP_BUSY_PIN  3     // Pin 5, Assigned for busy detection
-#define DFP_TX_PIN    1     // Pin 3, Assigned for serial TX, Connects to DF Player RX
-#define DFP_RX_PIN   -1     // Pin X, Assigned for serial RX, set to -1 if not used
+#define DFP_TX_PIN    1     // Pin 3, Assigned for serial TX, Connects to DF Player RX (Pin 2)
+#define DFP_RX_PIN    2     // Pin 4, Assigned for serial RX, Connects to DF Player TX (Pin 3), set to -1 if not used
 #define PROG_PIN      8     // Pin 11, Assigned for Program/Test Switch Input 
 #define METER_PIN     10    // Pin 13, Assigned for PWM output to drive VU meter
 #define PROG_LED_PIN  9     // Pin 12, Indicates running a programmed sequence
@@ -100,9 +102,11 @@ DFPlayer - A Mini MP3 Player For Arduino
 #define ENC_SW4_PIN   6     // D6, Pin 8, BCD 4
 #define ENC_SW8_PIN   4     // D4, Pin 6, BCD 8
 
+#define RANDOM_AIN    A4    // Pin 2, Used to set a random seed, used for Serial Monitor when active
+
 //Serial Monitor Debug
-#define SER_TX_PIN    8     // Pin 11, Assigned for serial TX, Connects to Serial Monitor RX
-#define SER_RX_PIN    2     // Pin 4, Assigned for serial RX, set to -1 if not used
+#define SER_TX_PIN    0     // Pin 2, Assigned for serial TX, Connects to Serial Monitor RX
+//#define SER_RX_PIN    2     // Pin 4, Assigned for serial RX, Connects to Serial Monitor TX
 #endif
 
 // ATtiny85 Pinouts
@@ -145,6 +149,7 @@ DFPlayer - A Mini MP3 Player For Arduino
 4- 0004_emf steady long (High Tone)     1.435s
 5- 0005_emf end                         0.282s
 6- 0006_emf power up                    copy of emf start, 0.238s
+7- 0007_emf charge up                   1.0s
 */
 #define EMF_TONE_START   1    
 #define EMF_TONE_LOW     2    
@@ -152,6 +157,9 @@ DFPlayer - A Mini MP3 Player For Arduino
 #define EMF_TONE_STEADYL 4    
 #define EMF_TONE_END     5    
 #define EMF_POWER_UP     6
+#define EMF_CHARGE_UP    7
+
+#define EMF_TONE_STEADYL_DURATION  1300    /* Maximum time until replay */   
 
 /* EMF Levels (3v max scale) mapped to input voltage and LED indication
  LED   |  Voltage | Sensor Level | Meter Level
@@ -170,6 +178,13 @@ DFPlayer - A Mini MP3 Player For Arduino
 #define EMF_METER_4   126 
 #define EMF_METER_5   158 
 
+// Use a random selection for meter levels
+#define EMF_RANDOM_1   -1       /* Selects a random range 10-30   */
+#define EMF_RANDOM_2   -2       /* Selects a random range 31-62   */
+#define EMF_RANDOM_3   -3       /* Selects a random range 63-94   */
+#define EMF_RANDOM_4   -4       /* Selects a random range 95-125  */
+#define EMF_RANDOM_5   -5       /* Selects a random range 126-157 */
+
 /* Set values for 1.5v, 3v, or 5v scale range */
 #define MAX_METER_LVL   158    /* Set to 80 for 1.5v, 158 for 3v, 255 for 5v scale */
 #define MTR_TEST_LEVEL  118    /* Set to 50 for 1.5v, 118 for 3v, 215 for 5v scale */
@@ -185,18 +200,23 @@ const int encSw2Pin = ENC_SW2_PIN;
 const int encSw4Pin = ENC_SW4_PIN;
 const int encSw8Pin = ENC_SW8_PIN;
 
-#define EMF_AUDIO_LEVEL 15
-int setEMFlevel = 0;              // Level for EMF meter output
-unsigned long emfTimer = 0;       // Delay timer
-int lastProgValue = 1;            // variable to store the value of the last program used
+#define AUDIO_LEVEL_ADDR     0          // Memory address of EMF audio level setting
+#define EMF_AUDIO_LEVEL     20          // Typical 15-20 to start
+#define EMF_MAX_AUDIO_LEVEL 30          // Highest Level
+#define EMF_MIN_AUDIO_LEVEL  4          // Lowest Audible Level
+byte emfVolumeLev = EMF_AUDIO_LEVEL;    // Current or initial DFP volume level for EMF
+int setEMFlevel = 0;                    // Level for EMF meter output
+unsigned long emfTimer = 0;             // Delay timer
+unsigned long emfTimer2 = 0;            // Delay timer
+int lastProgValue = 1;                  // variable to store the value of the last program used
 
-#ifdef DFP_DEBUG
+#if defined(NANO) || defined(ATTINY1604)
 int queryVal;
 #endif
 
 // EMF Meter programmed sequences
 // Set EMF Level, Duration, and Sound file play or not.
-const int maxProg = 6;            // Maximum number of programs used
+const int maxProg = 9;            // Maximum number of programs used
 
 struct emfProg {
   int emfLevel;
@@ -206,7 +226,7 @@ struct emfProg {
 
 // Program with meter level (0-158 | MAX_METER_LVL, 3v max), duration (ms), Sound Enable/Disable
 // EMF_METER_0   - Plays end tone, 0.282s max
-// EMF_METER_1   - Plays start tone, 0.238s max
+// EMF_METER_1   - Plays start tone, 0.287s max
 // EMF_METER_2-3 - Plays low tone, 0.238s max
 // EMF_METER_4+  - Plays high tone, 1.435s max
 // 
@@ -214,83 +234,186 @@ struct emfProg {
 // 
 // Update maxProg value when adding or deleting sequences
 
-// Program 1 (Single High/End)
-// 3 steps
+// Program 1 (Single High/End, also used for intial meter adjustments)
+// 4 steps
 emfProg emfProg1 [] = {
-  {EMF_METER_1, 200, 1},    // Start Tone
+  {EMF_METER_1, 230, 1},    // Start Tone
+  {EMF_METER_3, 100, 0},    // Display only
   {EMF_METER_5, 1400, 1},   // High Tone 
   {EMF_METER_0, 100, 1},    // End Tone, Make duration of last sound shorter than needed to prevent sound repeat.  
 };
 
-// Program 2 (Highs,Lows,End)
-// 12 steps
+// Program 2 (Highs,Lows,End 2 cycles)
+// 14 steps
 emfProg emfProg2 [] = {
-  {EMF_METER_1, 200, 1},    // Start Tone
-  {EMF_METER_3, 200, 0},    // Display only
-  {EMF_METER_5, 1000, 1},   // High Tone
-  {EMF_METER_3, 200, 1},    // Low Tone
-  {EMF_METER_2, 200, 0},    // Display only
+  {EMF_METER_1, 230, 1},    // Start Tone
+  {EMF_METER_3, 100, 0},    // Display only
+  {EMF_RANDOM_4, 1000, 1},  // High Tone
+  {EMF_METER_3, 210, 1},    // Low Tone
+  {EMF_RANDOM_1, 100, 0},   // Display only, pause
   {EMF_METER_0, 150, 1},    // End Tone
-  {EMF_METER_1, 150, 1},    // Start Tone
-  {EMF_METER_3, 300, 1},    // Low Tone
-  {EMF_METER_5, 1000, 1},   // High Tone
-  {EMF_METER_3, 200, 1},    // Low Tone
-  {EMF_METER_2, 200, 0},    // Display only
-  {EMF_METER_0, 100, 1}     // End Tone
+  {EMF_METER_0, 800, 0},    // Display only, pause
+  {EMF_METER_1, 230, 1},    // Start Tone
+  {EMF_RANDOM_3, 100, 0},   // Display only
+  {EMF_RANDOM_5, 1000, 1},  // High Tone
+  {EMF_METER_2, 210, 1},    // Low Tone
+  {EMF_METER_1, 100, 0},    // Display only, pause
+  {EMF_METER_0, 100, 1},    // End Tone
+  {EMF_RANDOM_1, 300, 0}              // Display only
 };
 
 // Program 3 (High,Low,High,End)
-// 10 steps
+// 12 steps
 emfProg emfProg3 [] = {
-  {EMF_METER_1, 150, 1},    // Start Tone 
-  {EMF_METER_4, 1500, 1},   // High Tone  
-  {EMF_METER_0, 150, 1},    // End Tone   
-  {EMF_METER_1, 150, 1},    // Start Tone 
-  {EMF_METER_2, 300, 1},    // Low Tone   
-  {EMF_METER_3, 200, 0},    // Display only   
-  {EMF_METER_4, 500, 1},    // High Tone  
-  {EMF_METER_5, 2000, 1},   // High Tone 
-  {EMF_METER_2, 200, 0},    // Display only
-  {EMF_METER_0, 100, 1}     // End Tone   
+  {EMF_METER_1, 230, 1},    // Start Tone 
+  {EMF_METER_3, 100, 0},    // Display only
+  {EMF_METER_4, 1400, 1},   // High Tone  
+  {EMF_METER_0, 150, 1},    // End Tone 
+  {EMF_RANDOM_1, 500, 0},   // Display only, pause
+  {EMF_METER_1, 200, 1},    // Start Tone 
+  {EMF_RANDOM_2, 50, 0},    // Low Tone   
+  {EMF_METER_3, 200, 1},    // Low Tone   
+  {EMF_METER_5, 1400, 1},   // High Tone 
+  {EMF_METER_2, 210, 1},    // Low Tone
+  {EMF_RANDOM_1, 100, 0},   // Display only, pause
+  {EMF_METER_0, 100, 1},    // End Tone
 };
 
 // Program 4 (Single Mid/Low/End)
 // 4 steps
 emfProg emfProg4 [] = {
-  {EMF_METER_1, 200, 1},    // Start Tone
-  {EMF_METER_2, 200, 1},    // Low Tone 
-  {EMF_METER_3, 200, 1},    // Mid Tone 
+  {EMF_METER_1, 230, 1},    // Start Tone
+  {EMF_METER_2, 100, 0},    // Display only 
+  {EMF_RANDOM_3, 210, 1},   // Mid Tone 
   {EMF_METER_0, 100, 1},    // End Tone  
 };
 
-// Program 5 (Dual Mid/Low/End)
+// Program 5 (Dual Chirps, Mid/Low/End)
 // 9 steps
 emfProg emfProg5 [] = {
-  {EMF_METER_1, 150, 1},    // Start Tone
+  {EMF_METER_1, 260, 1},    // Start Tone
   {EMF_METER_2, 150, 1},    // Low Tone 
-  {EMF_METER_3, 150, 1},    // Low Tone 
-  {EMF_METER_0, 150, 1},    // End Tone  
+  {EMF_RANDOM_3, 150, 1},   // Low Tone 
+  {EMF_METER_0, 200, 1},    // End Tone  
   {EMF_METER_0, 500, 0},    // Pause  500 ms                            
-  {EMF_METER_1, 150, 1},    // Start Tone
+  {EMF_METER_1, 260, 1},    // Start Tone
   {EMF_METER_2, 150, 1},    // Low Tone 
-  {EMF_METER_3, 150, 1},    // Low Tone 
+  {EMF_RANDOM_3, 150, 1},   // Low Tone 
   {EMF_METER_0, 100, 1},    // End Tone  
 };
 
 // Program 6 (Start/Long Mid/Low/End)
 // 6 steps
 emfProg emfProg6 [] = {
-  {EMF_METER_1, 150, 1},    // Start Tone
-  {EMF_METER_2, 150, 1},    // Low Tone 
-  {EMF_METER_3, 2000, 1},   // Long Low Tone 
-  {EMF_METER_2, 150, 1},    // Low Tone
-  {EMF_METER_1, 150, 1},    // Low Tone 
-  {EMF_METER_0, 150, 1},    // End Tone  
+  {EMF_METER_1, 230, 1},    // Start Tone
+  {EMF_METER_2, 200, 1},    // Low Tone 
+  {EMF_RANDOM_3, 2000, 1},  // Long Low Tone 
+  {EMF_METER_2, 200, 1},    // Low Tone
+  {EMF_RANDOM_1, 200, 1},   // Low Tone 
+  {EMF_METER_0, 100, 1},    // End Tone  
 };
+
+// Program 7. Inspired by Olivias S4 E2 sequence, ~16.5s
+// 32 steps
+emfProg emfProg7 [] = {
+  {EMF_METER_1, 230, 1},    // Start Tone
+  {EMF_METER_3, 100, 0},    // Display only, pause
+  {EMF_METER_5, 1300, 1},   // High Tone 
+  {EMF_METER_0, 150 , 1},   // End Tone 
+  {EMF_METER_0, 300, 0},    // Pause  500 ms  ---------------  
+  {EMF_METER_1, 230, 1},    // Start                            
+  {EMF_METER_0, 100, 1},    // End Tone, Make duration of last sound shorter than needed to prevent sound repeat.  
+  {EMF_METER_0, 300, 0},    // Pause  300 ms  --------------
+  {EMF_RANDOM_1, 230, 1},   // Start Tone
+  {EMF_METER_3, 100, 0},    // Display only, pause
+  {EMF_RANDOM_5, 1300, 1},  // High Tone 
+  {EMF_METER_0, 150 , 1},   // End Tone 
+  {EMF_METER_0, 800, 0},    // Pause    -------------------
+  {EMF_METER_1, 230, 1},    // Start Tone
+  {EMF_METER_2, 50, 0},     // Display only, pause
+  {EMF_METER_0, 180, 1},    // End Tone 
+  {EMF_METER_0, 500, 0},    // Pause    ------------------
+  {EMF_METER_2, 200, 1},    // Mid                          
+  {EMF_METER_0, 150, 1},    // End    
+  {EMF_METER_0, 1000, 0},   // Pause     ------------------
+  {EMF_METER_1, 230, 1},    // Start Tone
+  {EMF_METER_2, 50, 0},     // Display only, pause
+  {EMF_METER_3, 200, 1},    // Mid Tone 
+  {EMF_RANDOM_5, 1300, 1},  // High Tone 
+  {EMF_RANDOM_3, 100, 0},   // Pause
+  {EMF_METER_0, 150, 1},    // End 
+  {EMF_METER_0, 1000, 0},   // Pause    ------------------                            
+  {EMF_METER_2, 150, 1},    // Mid                          
+  {EMF_METER_0, 150, 1},    // End  
+  {EMF_METER_0, 1000, 0},   // Pause     -----------------
+  {EMF_RANDOM_2, 150, 1},   // Mid                          
+  {EMF_METER_0, 100, 1},    // End Tone, Make duration of last sound shorter than needed to prevent sound repeat.                        
+};
+
+// Program 8. Inspired by Deans S1 E11 sequence, ~15.4s
+// 34 steps
+emfProg emfProg8 [] = {
+  {EMF_METER_1, 230, 1},    // Start Tone
+  {EMF_METER_0, 150 , 1},   // End Tone 
+  {EMF_METER_0, 500, 0},    // Pause      -----------------                        
+  {EMF_RANDOM_1, 230, 1},   // Start                            
+  {EMF_METER_4, 200, 1},    // Short High Tone   
+  {EMF_METER_0, 150, 1},    // End    
+  {EMF_METER_0, 500, 0},    // Pause      -----------------
+  {EMF_METER_1, 230, 1},    // Start Tone
+  {EMF_RANDOM_5, 350, 1},   // Short High Tone
+  {EMF_METER_0, 150 , 1},   // End Tone 
+  {EMF_METER_0, 1000, 0},   // Pause      -----------------
+  {EMF_METER_1, 230, 1},    // Start Tone
+  {EMF_METER_0, 150 , 1},   // End Tone 
+  {EMF_METER_0, 700, 0},    // Pause      -----------------
+  {EMF_RANDOM_2, 150 , 1},  // Mid Tone 
+  {EMF_METER_0, 700, 0},    // Pause      -----------------
+  {EMF_METER_1, 230, 1},    // Start Tone
+  {EMF_METER_2, 100, 0},    // Display 
+  {EMF_METER_3, 200, 1},    // Mid Tone 
+  {EMF_RANDOM_4, 100, 0},   // Display
+  {EMF_METER_5, 1300, 1},   // High Tone 
+  {EMF_METER_0, 100, 0},    // Pause      -----------------
+  {EMF_METER_2, 200, 1},    // Low    
+  {EMF_METER_0, 150, 1},    // End    
+  {EMF_METER_0, 600, 0},    // Pause      -----------------
+  {EMF_METER_1, 230, 1},    // Start Tone
+  {EMF_RANDOM_4, 300, 1},   // Short High Tone 
+  {EMF_METER_0, 150, 1},    // End 
+  {EMF_METER_0, 700, 0},    // Pause      -----------------
+  {EMF_METER_2, 200, 1},    // Low Tone 
+  {EMF_METER_0, 150, 1},    // End 
+  {EMF_METER_0, 500, 0},    // Pause            -
+  {EMF_RANDOM_2, 200, 1},   // Low Tone 
+  {EMF_METER_0, 100, 1},    // End                           
+};
+
+// Program 9. Inspired by S4 E13, Low tone / High tone, lots of meter movement 
+// 16 steps
+emfProg emfProg9 [] = {
+  {EMF_METER_1, 200, 1},    // Start Tone
+  {EMF_METER_3, 100, 0},    // Display only
+  {EMF_METER_2, 100, 1},    // Low Tone
+  {EMF_RANDOM_1, 100, 0},   // Display only
+  {EMF_METER_2, 100, 0},    // Display only
+  {EMF_METER_0, 150, 1},    // End Tone
+  {EMF_METER_0, 400, 0},    // Pause
+  {EMF_METER_1, 150, 1},    // Start Tone
+  {EMF_RANDOM_3,100, 0},    // Display only
+  {EMF_METER_2, 100, 0},    // Display only
+  {EMF_RANDOM_3, 150, 1},   // Low Tone
+  {EMF_METER_5, 1200, 1},   // High Tone
+  {EMF_METER_2, 250, 0},    // Display only
+  {EMF_RANDOM_4, 300, 0},   // Display only                         
+  {EMF_METER_0, 100, 1},     // End Tone
+  {EMF_METER_1, 200, 0}     // Display only
+};
+
 
 SoftwareSerial dfpSerial (DFP_RX_PIN, dfpTXpin); // RX, TX
 
-#if defined(DFP_DEBUG) && defined(ATTINY804)
+#if defined(DFP_DEBUG) && defined(ATTINY1604)
 // Set up for Serial Monitor
 SoftwareSerial attinySerial (SER_RX_PIN, SER_TX_PIN); // RX, TX
 #endif
@@ -340,25 +463,50 @@ void runProgram (struct emfProg emfprog[], int emfProgSz)
 {
   int mp3Track = 0;
   int currentMeterLvl = 0;
-  int duration = 0;
+  unsigned long duration = 0;
 
   progLED (1);
   for (int i = 0; i < emfProgSz; i++) {
     currentMeterLvl = emfprog[i].emfLevel;
+
+    switch (currentMeterLvl) {  
+       case -1:
+          currentMeterLvl = random (10, 31);
+        break;
+       case -2: 
+          currentMeterLvl = random (31, 63);
+        break;
+       case -3:
+          currentMeterLvl = random (63, 95);
+        break;
+       case -4:
+          currentMeterLvl = random (95, 126);
+        break;
+       case -5:
+          currentMeterLvl = random (126, 158);
+        break;
+       default:
+          if (currentMeterLvl < 0) {
+            currentMeterLvl = EMF_METER_0;
+          }
+          break;
+    }
+
     duration = emfprog[i].duration;
 
     mp3Track = getMP3track(currentMeterLvl);
 
     analogWrite(meterPin,currentMeterLvl);
-    emfTimer = millis();
 
     if (emfprog[i].sound) dfpPlayTrackMP3(mp3Track);
+    emfTimer = millis();
+    delay (10);
 
     while (millis() - emfTimer < duration) {
       if (emfprog[i].sound) {
           if (digitalRead(dfpBusyPin)) {
             dfpPlayTrackMP3(mp3Track);
-            delay (30);
+            delay (10);
           }
       } 
     }
@@ -370,17 +518,17 @@ void runProgram (struct emfProg emfprog[], int emfProgSz)
 
 void setup()
 {
+  // Set initial state of outputs
   pinMode(progPin, INPUT_PULLUP);         // Program switch input, active LOW 
   pinMode(progLEDpin, OUTPUT);            // Program LED output
 
-#if defined(NANO) || defined(ATTINY804)
+#if defined(NANO) || defined(ATTINY1604)
   pinMode (encSw1Pin, INPUT_PULLUP);      // Encoder Switch Input 
   pinMode (encSw2Pin, INPUT_PULLUP);
   pinMode (encSw4Pin, INPUT_PULLUP);
   pinMode (encSw8Pin, INPUT_PULLUP);
 #endif
 
-  // Set initial state of outputs
   digitalWrite (progLEDpin, 0);
   pinMode(meterPin, INPUT);
 
@@ -390,29 +538,45 @@ void setup()
       Serial.println();
       Serial.println(F("DFPlayer Test"));
       Serial.println(F("Initializing DFPlayer ... (May take 3~5 seconds)"));
+
+      randomSeed (RANDOM_AIN);
     #endif
 
-    #ifdef ATTINY804
+    #ifdef ATTINY1604
       attinySerial.begin (115200);
       Serial.println();
       Serial.println(F("DFPlayer Test"));
       Serial.println(F("Initializing DFPlayer ... (May take 3~5 seconds)"));
+    #endif
+#else
+    #ifdef ATTINY1604
+      randomSeed (RANDOM_AIN);
     #endif
 #endif
 
     dfpSerial.begin (9600);
     dfpSerial.listen();
 
-// Initial setup for DFPlayer.
-// Sets up DFP_BUSY_PIN if used to use the busy state/pin of the player. 
-// Resets the device and provides a 1 sec delay.
+    // Initial setup for DFPlayer.
+    // Sets up DFP_BUSY_PIN if used to use the busy state/pin of the player. 
+    // Resets the device and provides a 1 sec delay.
     dfpSetup();
-    dfpSetVolume(EMF_AUDIO_LEVEL);
+
+    emfVolumeLev = EEPROM.read(AUDIO_LEVEL_ADDR);
+
+    if ((emfVolumeLev < EMF_MIN_AUDIO_LEVEL) || (emfVolumeLev > EMF_MAX_AUDIO_LEVEL)) {
+        // Likely first run, set to a reasonable value. If audio too low, reset to default
+        emfVolumeLev = EMF_AUDIO_LEVEL;   
+    }
+
+    dfpSetVolume(emfVolumeLev);
     dfpSetEq(DFP_EQ_CLASSIC);
 
 #ifdef DFP_DEBUG
-
     #ifdef NANO
+        Serial.print(F("Audio Level:"));
+        Serial.println(emfVolumeLev);
+
         queryVal = dfpReadQuery(0);
         Serial.print(F("Params Rst:"));
         Serial.println(queryVal, HEX);
@@ -424,9 +588,9 @@ void setup()
 #endif
 
   // Power up sound and flick meter for start up visual
-  dfpPlayTrackMP3(EMF_POWER_UP);
+  dfpPlayTrackMP3(EMF_CHARGE_UP);
   analogWrite(meterPin, MTR_TEST_LEVEL);
-  delay (500); 
+  delay (1000);               // EMF_CHARGE_UP runs for 1 sec
   analogWrite(meterPin,0);
   pinMode(meterPin, INPUT);   // Shut down output 
 }
@@ -436,48 +600,87 @@ void loop()
     // Program pin active low
     if (!digitalRead(progPin)) {
         // Enter program mode and run one of the programmed sequences or test mode
-        delay (400);
+        delay (350);
 
         if (!digitalRead(progPin)) {
             // Button still pressed, test mode
 
+            // EMF  start tone
             setEMFlevel = EMF_METER_1;
             analogWrite(meterPin,setEMFlevel);
-            delay (200);
-      
-            /* High detection state
-            Check busy line - if still playing skip or if not play again 
-            dfpBusyPin is active low on busy state */
             dfpPlayTrackMP3(EMF_TONE_START);
+            delay (150);
 
-            setEMFlevel = EMF_METER_2;
-            analogWrite(meterPin,setEMFlevel);
-            delay (200);
-
-            setEMFlevel = EMF_METER_3;
-            analogWrite(meterPin,setEMFlevel);
-            delay (200);
-
-            while (!digitalRead(progPin)) {
-                if (digitalRead(dfpBusyPin)) {
-                    dfpPlayTrackMP3(EMF_TONE_STEADYL);
-                    setEMFlevel = EMF_METER_5;
-                    analogWrite(meterPin,setEMFlevel);
-                }
-                delay (30);
+            if (!digitalRead(progPin)) {
+                // Button still pressed, Meter only
+                setEMFlevel = EMF_METER_2;
+                analogWrite(meterPin,setEMFlevel);
+                delay (150);
+            }
+      
+            if (!digitalRead(progPin)) {
+                // Button still pressed, EMF low tone
+                setEMFlevel = EMF_METER_3;
+                analogWrite(meterPin,setEMFlevel);
+                dfpPlayTrackMP3(EMF_TONE_LOW);
+                delay (300);
             }
 
+            emfTimer = millis();     // MP3 track time
+            emfTimer2 = millis();    // Meter random set time
+            // Prog/Test pin is active low
+            while (!digitalRead(progPin)) {
+                if (digitalRead(dfpBusyPin) || ((millis() - emfTimer) > EMF_TONE_STEADYL_DURATION)) {
+                    // Replay just under sound file play length, slightly faster than using busy pin
+                    setEMFlevel = EMF_METER_5;
+                    analogWrite(meterPin,setEMFlevel);
+                    dfpPlayTrackMP3(EMF_TONE_STEADYL);
+                    emfTimer = millis();
+                }
+                delay (30);
+
+                if ((millis() - emfTimer2) > 400) {
+                    setEMFlevel = random (95, 158);
+                    analogWrite(meterPin,setEMFlevel);
+                    emfTimer2 = millis();
+                }
+            }
+
+            // Wind down the meter
             dfpPlayTrackMP3(EMF_TONE_END);
-            setEMFlevel = EMF_METER_2;
+            setEMFlevel = random (60, 90);
             analogWrite(meterPin,setEMFlevel);
-            delay (200);
+            delay (100);
+
+            setEMFlevel = random (30, 60);
+            analogWrite(meterPin,setEMFlevel);
+            delay (100);
 
             setEMFlevel = 0;
             analogWrite(meterPin,setEMFlevel);
-            pinMode(meterPin, INPUT);
+            pinMode(meterPin, INPUT);   // Shut down PWM
+
+            dfpSerialPurge ();    // Prep for volume read
+
+            /* Check volume level */           
+#if defined(NANO) || defined(ATTINY1604)
+            queryVal = dfpGetVolume();
+            if ((queryVal != emfVolumeLev) && (queryVal <= EMF_MAX_AUDIO_LEVEL)) {
+                /* Update value */
+                emfVolumeLev = queryVal;
+                EEPROM.write(AUDIO_LEVEL_ADDR, emfVolumeLev);
+
+#ifdef DFP_DEBUG
+        #ifdef NANO
+            Serial.print (F("New Audio Level: "));
+            Serial.println (emfVolumeLev);
+        #endif
+#endif
+            }
+#endif
         } else {
             // Select and run one of the programmed sequences
-#if defined(NANO) || defined(ATTINY804)
+#if defined(NANO) || defined(ATTINY1604)
             // Read value
             byte bcdValue1 = digitalRead(encSw1Pin);
             byte bcdValue2 = digitalRead(encSw2Pin);
@@ -496,7 +699,7 @@ void loop()
             Serial.println (bcdValue8);
         #endif
 
-        #ifdef ATTINY804
+        #ifdef ATTINY1604
             attinySerial.print (F("BCD Sw1: "));
             attinySerial.println (bcdValue1);
             attinySerial.print (F("BCD Sw2: "));
@@ -529,7 +732,7 @@ void loop()
             Serial.println (lastProgValue);
         #endif
 
-        #ifdef ATTINY804
+        #ifdef ATTINY1604
             attinySerial.print (F("BCD Value: "));
             attinySerial.println (bcdValue);
 
@@ -537,18 +740,18 @@ void loop()
             attinySerial.println (lastProgValue);
         #endif
     #endif
-#endif   // endif Nano or ATTINY804/1604
+#endif   // endif Nano or ATTINY1604
 
             // Short press, run through program
             switch (lastProgValue) {
               case 1:
-                  runProgram (emfProg1, 3);
+                  runProgram (emfProg1, 4);
                   break;
               case 2:
-                  runProgram (emfProg2, 12);
+                  runProgram (emfProg2, 14);
                   break;
               case 3:
-                  runProgram (emfProg3, 10);
+                  runProgram (emfProg3, 12);
                   break;
               case 4:
                   runProgram (emfProg4, 4);
@@ -558,6 +761,15 @@ void loop()
                   break;
               case 6:
                   runProgram (emfProg6, 6);
+                  break;
+              case 7:
+                  runProgram (emfProg7, 32);
+                  break;
+              case 8:
+                  runProgram (emfProg8, 34);
+                  break;
+              case 9:
+                  runProgram (emfProg9, 16);
                   break;
               default:
                   break;

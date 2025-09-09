@@ -1,12 +1,16 @@
 # 10 LED EMF Meter Replica - Olivia's Meter (r2)
 
+## Updated version 2.0
+
 **Blank PCB**
 
 <img src="img/10_LED_EMF_PCB_f.jpg" width="15.5%">  <img src="img/10_LED_EMF_PCB_b.jpg" width="15%">
 
 **Example of Assembled EMF Meter**
 
-<img src="img/10_LED_Assembled_f.jpg" width="20%">  <img src="img/10_LED_Assembled_b1.jpg" width="20%">
+<img src="img/10_LED_EMF_assembled_f.jpg" width="20%">  <img src="img/10_LED_EMF_assembled_b.jpg" width="20%">
+
+<img src="img/10_LED_EMF_on_stand_LEDS_on2.jpg" width="20%">
 
 Here is the documentation and support files for the Supernatural 10 LED EMF Meter Replica that Olivia used in season 4 episode 2. 
 To assemble this circuit board you must be comfortable working with and soldering electronic parts.
@@ -23,8 +27,8 @@ A schematic is available along with a Bill of Materials (BOM).
 * 9 Pre-Programmed EMF sequences
 
 This meter was only shown in one episode of the series but was a very standout meter. This is a prop only version with no EMF detection abilities. 
-This is truly a one-of-a-kind meter. The meter has a test button similar to the other EMF meter for creating custom EMF events and also has 9 pre-programmed event sequences.
-The pre-programmed sequences can be selected with using a rotary switch and then a quick press of the Program/Test button to start the sequence. Using the 0 position each button
+This is truly a unique meter. The meter has a test button similar to the other EMF meter for creating custom EMF events and also has 9 pre-programmed event sequences.
+The pre-programmed sequences can be selected using a rotary switch and then a quick press of the Program/Test button to start the sequence. Using the 0 position each button
 press will rotate to the next programmed sequence. These pre-programmed sequences can be added to or changed by reprogramming the ATtiny code.
 
 An ATTiny1604 is used to control the DFPlayer sound board and the VU/LED meter deflection. 
