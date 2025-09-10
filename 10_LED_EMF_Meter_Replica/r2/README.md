@@ -1,19 +1,17 @@
 # 10 LED EMF Meter Replica - Olivia's Meter (r2)
 
-**Updated version**
+### Updated version ###
 
 **Blank PCB**
 
-<img src="img/10_LED_EMF_PCB_f.jpg" width="15.5%">  <img src="img/10_LED_EMF_PCB_b.jpg" width="15%">
+<img src="img/10_LED_EMF_PCB_f.jpg" width="15.5%">  <img src="img/10_LED_EMF_PCB_b.jpg" width="15.6%">
 
-**PCB Fabricattion Sponsored By**<img src="img/PCBway_logo.png" width="100%">
+**PCB Fabrication Sponsored By**<a href="https://www.pcbway.com"><img src="img/PCBway_logo.png" width="9%"></a>
 
 
 **Example of Assembled EMF Meter**
 
-<img src="img/10_LED_EMF_assembled_f.jpg" width="20%">  <img src="img/10_LED_EMF_assembled_b.jpg" width="20%">
-
-<img src="img/10_LED_EMF_on_stand_LEDS_on2.jpg" width="20%">
+<img src="img/10_LED_EMF_assembled_f.jpg" width="21%">  <img src="img/10_LED_EMF_assembled_b.jpg" width="20%">  <img src="img/10_LED_EMF_on_stand_LEDS_on2.jpg" width="21.5%">
 
 
 Here is the documentation and support files for the Supernatural 10 LED EMF Meter Replica that Olivia used in season 4 episode 2. 
