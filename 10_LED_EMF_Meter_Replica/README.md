@@ -33,6 +33,8 @@ Programming is done through either a ICSP or UPDI programming interface dependin
 
 -[3D files](r1/3D/)
 
+-[MP3 files](../EMF_Meter_Replica/mp3/)
+
 ### Version r2
 
 -[Schematics](r2/schematics/)
@@ -43,6 +45,9 @@ Programming is done through either a ICSP or UPDI programming interface dependin
 
 -[Source code](r2/src/)
 
+-[3D files](r1/3D/)
+
+-[MP3 files](../EMF_Meter_Replica/mp3/)
 
 ## Licensing
 
@@ -50,6 +55,7 @@ This work is licensed under Creative Commons Attribution-ShareAlike 4.0 Internat
 To view a copy of this license, visit [https://creativecommons.org/licenses/by-sa/4.0/](https://creativecommons.org/licenses/by-sa/4.0/)
 
 Distributed as-is; no warranty is given.
+
 
 
 
