@@ -1,7 +1,7 @@
 # 10 LED EMF Meter Replica - Olivia's Meter
 
-- [Original perfboard r1](r1/)
-- [New Updated Version on custom PCB](r2/)
+- [Original perfboard (r1)](r1/)
+- [New Updated Version on custom PCB (r2)](r2/)
 
 Here is the documentation and support files for the Supernatural 10 LED EMF Meter Replica that Olivia used in season 4 episode 2. 
 To assemble this circuit board you must be comfortable working with and soldering electronic parts.
@@ -55,6 +55,7 @@ This work is licensed under Creative Commons Attribution-ShareAlike 4.0 Internat
 To view a copy of this license, visit [https://creativecommons.org/licenses/by-sa/4.0/](https://creativecommons.org/licenses/by-sa/4.0/)
 
 Distributed as-is; no warranty is given.
+
 
 
 
