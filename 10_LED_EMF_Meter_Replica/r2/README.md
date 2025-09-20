@@ -6,7 +6,7 @@
 
 <img src="img/10_LED_EMF_PCB_f.jpg" width="15.5%">  <img src="img/10_LED_EMF_PCB_b.jpg" width="15.6%">
 
-**PCB Fabrication Sponsored By**<a href="https://www.pcbway.com"><img src="img/PCBway_logo.png" width="9%"></a>
+**PCB Made By**<a href="https://www.pcbway.com"><img src="img/PCBway_logo.png" width="9%"></a>
 
 
 **Example of Assembled EMF Meter**
@@ -52,6 +52,9 @@ The ATTiny1604 can be reprogrammed using the UPDI port.
 
 -[Source code](src/)
 
+-[3D files](../r1/3D/)
+
+-[MP3 files](../../EMF_Meter_Replica/mp3/)
 
 ## Licensing
 
