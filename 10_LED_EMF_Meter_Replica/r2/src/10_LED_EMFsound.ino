@@ -70,8 +70,8 @@ DFPlayer - A Mini MP3 Player For Arduino
 #define RANDOM_AIN    A4    // Used to set a random seed
 #endif
 
-// Attny1604 Pinouts
-// Use pins X and X to communicate with DFPlayer Mini
+// Attny1604 Pinouts - 16MHz Clock
+// Use pins 1 and 2 to communicate with DFPlayer Mini
 // ---------------------------------------------------------
 // ATTny85: AVR_ATtiny85
 // Attny804/1604
@@ -560,7 +560,7 @@ void setup()
     // Initial setup for DFPlayer.
     // Sets up DFP_BUSY_PIN if used to use the busy state/pin of the player. 
     // Resets the device and provides a 1 sec delay.
-    dfpSetup();
+    dfpSetup(DFP_BUSY_PIN, 1000);
 
     emfVolumeLev = EEPROM.read(AUDIO_LEVEL_ADDR);
 
@@ -772,6 +772,9 @@ void loop()
                   runProgram (emfProg9, 16);
                   break;
               default:
+                  /* If none of the above, bad state, reset */
+                  lastProgValue = 1;
+                  runProgram (emfProg1, 4);
                   break;
             }
 
