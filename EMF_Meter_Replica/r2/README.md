@@ -6,7 +6,7 @@
 
 **Example of Assembled EMF Meter**
 
-<img src="img/EMF_6v_front" width="20%">  <img src="../r1/img/EMF_Meter_9v_5cap_f.jpg" width="20%">
+<img src="img/EMF_6v_front.jpg" width="20%">  <img src="../r1/img/EMF_Meter_9v_5cap_f.jpg" width="20%">
 
 Here is the documentation and support files for building and using the Supernatural EMF Meter Replica. 
 To assemble this circuit board you must be comfortable working with and soldering electronic parts.
@@ -47,11 +47,11 @@ Check out the documents folder for more details.
 
 ## Directories
 
--[Schematics](/schematics/)
+-[Schematics](schematics/)
 
--[Documents](/doc/)
+-[Documents](doc/)
 
--[Images](/img/)
+-[Images](img/)
 
 -[Source code](../src/)
 
