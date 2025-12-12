@@ -120,8 +120,8 @@ void dfpPlayTrack(int track);
 void dfpPlayTrackMP3(int track);
 
 // Set busyPin to -1 if not used, delay should be at least 1000 or higher if there is a large number of tracks.
+// busyPin will be configured with input pull ups enabled
 void dfpSetup(byte busyPin, int dfpDelay);
-
 
 /* Query Functions */
 

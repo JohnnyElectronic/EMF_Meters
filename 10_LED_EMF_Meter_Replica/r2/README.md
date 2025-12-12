@@ -36,6 +36,8 @@ press will rotate to the next programmed sequence. These pre-programmed sequence
 An ATTiny1604 is used to control the DFPlayer sound board and the VU/LED meter deflection. 
 The ATTiny1604 can be reprogrammed using the UPDI port. 
 
+Check out the documents folder for more details.
+
 ## Purchasing
 [Visit my Tindie Store](https://www.tindie.com/stores/johnnyelectronic/)
 

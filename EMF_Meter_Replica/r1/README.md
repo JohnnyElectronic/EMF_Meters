@@ -1,14 +1,16 @@
-# EMF Meter Replica
+# EMF Meter Replica (r1) - Discontinued
 
-<img src="EMF_Meters.jpg" width="20%">
+**Blank PCB**
 
-- [EMF Meter Replica (r1)](r1/)
-- [EMF Meter Replica (r2) - Updated Version!](r2/)
+<img src="img/EMF_Meter_PCB_f.jpg" width="20%">  <img src="img/EMF_Meter_PCB_b.jpg" width="20%">
+
+**Example of Assembled EMF Meter**
+
+<img src="img/EMF_Meter_9v_5cap_f.jpg" width="20%">  <img src="img/EMF_Meter_AA_4cap_b.jpg" width="20%">
 
 Here is the documentation and support files for building and using the Supernatural EMF Meter Replica. 
 To assemble this circuit board you must be comfortable working with and soldering electronic parts.
-A full assembly and usage guide is available in the "doc" folder as well as a 2 part video series is 
-available on YouTube.
+A full assembly and usage guide is available in the "doc" folder as well as a 2 part video series.
 
 ## Technical Details
 
@@ -28,8 +30,8 @@ It can also be built as a simple prop by not populating the analog components.
 The meter was designed to replicate a variety of the meter configurations used in the TV series.
 
 An ATTiny85 is used to control the DFPlayer sound board. 
-Programming for the ATTiny85 can be accomplished using an In-Circuit Serial Programming (ICSP) port to program the part on the board. 
-I also have available a soft touch programming cable for programming this part. 
+Programming for the ATTiny85 can be done before mounting and can also be accomplished using an In-Circuit Serial Programming (ICSP) port to program the mounted part on the board. 
+There is a jumper option (JP1) to select either the main board power or to use the ICSP port for programming power. I also have available a soft touch programming cable for programming this part. 
 
 Check out the documents folder for more details.
 
@@ -45,37 +47,17 @@ Check out the documents folder for more details.
 
 ## Directories
 
-### Version r1
+-[Schematics](/schematics/)
 
--[Schematics](r1/schematics/)
+-[Documents](/doc/)
 
--[Documents](r1/doc/)
+-[Images](/img/)
 
--[Images](r1/img/)
+-[Source code](../src/)
 
--[Source code](/src/)
+-[3D files](../3D/)
 
--[3D files](/3D/)
-
--[MP3 files](/mp3/)
-
-### Version r2
-
--[Schematics](r2/schematics/)
-
--[Documents](r2/doc/)
-
--[Images](r2/img/)
-
--[Source code](/src/)
-
--[3D files](/3D/)
-
--[MP3 files](/mp3/)
-
-### DFPlayer Files
--[DFPlayer](../DFPlayer/)
-
+-[MP3 files](../mp3/)
 
 ## Licensing
 

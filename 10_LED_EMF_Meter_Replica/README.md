@@ -13,6 +13,8 @@ These pre-programmed sequences can be added to or changed by reprogramming the A
 An ATTiny is used to control the DFPlayer sound board and the analog meter deflection.
 Programming is done through either a ICSP or UPDI programming interface depending on version. 
 
+Check out the documents folder for more details.
+
 ## Purchasing
 [Visit my Tindie Store](https://www.tindie.com/stores/johnnyelectronic/)
 
@@ -48,6 +50,9 @@ Programming is done through either a ICSP or UPDI programming interface dependin
 -[3D files](r1/3D/)
 
 -[MP3 files](../EMF_Meter_Replica/mp3/)
+
+### DFPlayer Files
+-[DFPlayer](../DFPlayer/)
 
 ## Licensing
 

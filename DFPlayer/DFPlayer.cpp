@@ -178,6 +178,8 @@ byte dfpLastRxCmd()
 // Set busyPin to -1 if not used else greater than zero for use by the dfpBusyWait() procedure, dfpDelay should be at 
 // least 1000 or higher if there is a large number of tracks.
 // 
+// busyPin is configured with input pull ups enabled.
+// 
 // Resets the device and provides a delay set by dfpDelay.
 void dfpSetup(byte busyPin, int dfpDelay)
 // Setup the busy pin if used and reset

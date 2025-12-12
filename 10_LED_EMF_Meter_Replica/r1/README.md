@@ -28,6 +28,7 @@ These pre-programmed sequences can be added to or changed by reprogramming the A
 An ATTiny85 is used to control the DFPlayer sound board and the analog meter deflection. 
 The ATTiny85 is socketed and can be reprogrammed if needed. 
 
+Check out the documents folder for more details.
 
 ## Purchasing
 [Visit my Tindie Store](https://www.tindie.com/stores/johnnyelectronic/)
