@@ -47,11 +47,11 @@ Check out the documents folder for more details.
 
 ## Directories
 
--[Schematics](/schematics/)
+-[Schematics](schematics/)
 
--[Documents](/doc/)
+-[Documents](doc/)
 
--[Images](/img/)
+-[Images](img/)
 
 -[Source code](../src/)
 
