@@ -1,6 +1,6 @@
-# EMF Meter Replica
+# EMF Meter Replica - Supernatural TV Series
 
-<img src="EMF_Meters.jpg" width="20%">
+<img src="EMF_Meters.jpg" width="70%">
 
 - [EMF Meter Replica (r1)](r1/)
 - [EMF Meter Replica (r2) - Updated Version!](r2/)
