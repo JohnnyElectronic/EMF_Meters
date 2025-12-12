@@ -53,11 +53,11 @@ Check out the documents folder for more details.
 
 -[Images](r1/img/)
 
--[Source code](/src/)
+-[Source code](src/)
 
--[3D files](/3D/)
+-[3D files](3D/)
 
--[MP3 files](/mp3/)
+-[MP3 files](mp3/)
 
 ### Version r2
 
@@ -67,11 +67,11 @@ Check out the documents folder for more details.
 
 -[Images](r2/img/)
 
--[Source code](/src/)
+-[Source code](src/)
 
--[3D files](/3D/)
+-[3D files](3D/)
 
--[MP3 files](/mp3/)
+-[MP3 files](mp3/)
 
 ### DFPlayer Files
 -[DFPlayer](../DFPlayer/)
