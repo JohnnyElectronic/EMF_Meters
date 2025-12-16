@@ -15,6 +15,11 @@ Programming is done through either a ICSP or UPDI programming interface dependin
 
 Check out the documents folder for more details.
 
+
+## Journal Pages Now Available!
+<img src="Journal/10_LED_EMF_Meter_Journal_Page_br.png" width="30%">
+
+
 ## Purchasing
 [Visit my Tindie Store](https://www.tindie.com/stores/johnnyelectronic/)
 

@@ -37,6 +37,12 @@ Check out the documents folder for more details.
 > [See My YouTube Channel for examples on programming ATTiny parts using a softtouch cable](https://www.youtube.com/@Johnny_Electronic/playlists)
 
 
+## Journal Pages Now Available!
+<img src="Journal/EMF_Meter_Journal_Page_cs_br.png" width="30%">
+<img src="Journal/EMF_Schematic2_Journal_Page.png" width="30%">
+
+
+
 ## Purchasing
 [Visit my Tindie Store](https://www.tindie.com/stores/johnnyelectronic/)
 
@@ -44,6 +50,9 @@ Check out the documents folder for more details.
 
 
 ## Directories
+
+### Journal Pages
+-[Journal Pages](Journal/)
 
 ### Version r1
 
