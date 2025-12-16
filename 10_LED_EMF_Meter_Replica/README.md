@@ -28,6 +28,9 @@ Check out the documents folder for more details.
 
 ## Directories
 
+### Journal
+-[Journal](Journal/)
+
 ### Version r1
 
 -[Schematics](r1/schematics/)
@@ -65,6 +68,7 @@ This work is licensed under Creative Commons Attribution-ShareAlike 4.0 Internat
 To view a copy of this license, visit [https://creativecommons.org/licenses/by-sa/4.0/](https://creativecommons.org/licenses/by-sa/4.0/)
 
 Distributed as-is; no warranty is given.
+
 
 
 
