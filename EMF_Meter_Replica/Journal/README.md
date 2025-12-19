@@ -42,6 +42,11 @@ EMF_Schematic_Journal_Page        - plain version
 EMF_Schematic2_Journal_Page       - with small meter sketch at bottom
 
 
+**Blank 1/4" blue grid template to print something on the back side of the journal pages.**
+
+blue_1_4inch_grid
+
+
 ## Licensing
 
 This work is licensed under Creative Commons Attribution-ShareAlike 4.0 International. 
