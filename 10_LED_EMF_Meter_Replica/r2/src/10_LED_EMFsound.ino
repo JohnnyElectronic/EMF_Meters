@@ -2,7 +2,16 @@
 Supernatural 10 LED EMF Meter Replica
 
 EMF ATTiny Code
+Release: 2.1 (Label: EMF / 10r2.1)
+Updated serial debug for ATTiny1604
+Bug fix for no audio after manual test press
+  - remixed 0002_emf low short, now version 2, slightly longer
+  - Added in DFPlayer reset check for no audio
+
 Release: 2.0 (Label: EMF / 10r2)
+Initial release for EMF PCB r2
+Added mod for volume storage and DFPlayer read
+
 
 Johnny Electronic
 https://github.com/JohnnyElectronic
@@ -106,7 +115,7 @@ DFPlayer - A Mini MP3 Player For Arduino
 
 //Serial Monitor Debug
 #define SER_TX_PIN    0     // Pin 2, Assigned for serial TX, Connects to Serial Monitor RX
-//#define SER_RX_PIN    2     // Pin 4, Assigned for serial RX, Connects to Serial Monitor TX
+#define SER_RX_PIN    -1    // Pin 4, Assigned for serial RX, Connects to Serial Monitor TX, Set to -1 if not used
 #endif
 
 // ATtiny85 Pinouts
@@ -144,7 +153,7 @@ DFPlayer - A Mini MP3 Player For Arduino
 
 /* Audio Tracks (mp3 folder on SD card):
 1- 0001_emf start                       0.238s
-2- 0002_emf low short                   0.282s
+2- 0002_emf low short2                  0.400s
 3- 0003_emf steady short (High Tone)    0.568s
 4- 0004_emf steady long (High Tone)     1.435s
 5- 0005_emf end                         0.282s
@@ -243,23 +252,23 @@ emfProg emfProg1 [] = {
   {EMF_METER_0, 100, 1},    // End Tone, Make duration of last sound shorter than needed to prevent sound repeat.  
 };
 
-// Program 2 (Highs,Lows,End 2 cycles)
+// Program 2 (Ramp Up/Down)
 // 14 steps
 emfProg emfProg2 [] = {
-  {EMF_METER_1, 230, 1},    // Start Tone
-  {EMF_METER_3, 100, 0},    // Display only
-  {EMF_RANDOM_4, 1000, 1},  // High Tone
-  {EMF_METER_3, 210, 1},    // Low Tone
-  {EMF_RANDOM_1, 100, 0},   // Display only, pause
-  {EMF_METER_0, 150, 1},    // End Tone
-  {EMF_METER_0, 800, 0},    // Display only, pause
-  {EMF_METER_1, 230, 1},    // Start Tone
-  {EMF_RANDOM_3, 100, 0},   // Display only
-  {EMF_RANDOM_5, 1000, 1},  // High Tone
-  {EMF_METER_2, 210, 1},    // Low Tone
-  {EMF_METER_1, 100, 0},    // Display only, pause
-  {EMF_METER_0, 100, 1},    // End Tone
-  {EMF_RANDOM_1, 300, 0}              // Display only
+  {EMF_METER_1, 500, 1},    // Start Tone
+  {EMF_METER_1, 200, 0},    // Display only
+  {EMF_METER_2, 500, 1},    // Low Tone
+  {EMF_METER_2, 200, 0},    // Display only
+  {EMF_METER_3, 500, 1},    // Low Tone
+  {EMF_METER_3, 200, 0},    // Display only
+  {EMF_METER_4, 500, 1},    // High Tone
+  {EMF_METER_4, 200, 0},    // Display only
+  {EMF_METER_5, 500, 1},    // High Tone
+  {EMF_METER_5, 200, 0},    // Display only
+  {EMF_METER_2, 500, 1},    // Low Tone
+  {EMF_METER_2, 200, 0},    // Display only
+  {EMF_METER_0, 200, 1},    // End Tone
+  {EMF_METER_0, 200, 0}     // Display only
 };
 
 // Program 3 (High,Low,High,End)
@@ -282,9 +291,9 @@ emfProg emfProg3 [] = {
 // Program 4 (Single Mid/Low/End)
 // 4 steps
 emfProg emfProg4 [] = {
-  {EMF_METER_1, 230, 1},    // Start Tone
+  {EMF_METER_1, 260, 1},    // Start Tone
   {EMF_METER_2, 100, 0},    // Display only 
-  {EMF_RANDOM_3, 210, 1},   // Mid Tone 
+  {EMF_RANDOM_3, 350, 1},   // Mid Tone 
   {EMF_METER_0, 100, 1},    // End Tone  
 };
 
@@ -293,12 +302,12 @@ emfProg emfProg4 [] = {
 emfProg emfProg5 [] = {
   {EMF_METER_1, 260, 1},    // Start Tone
   {EMF_METER_2, 150, 1},    // Low Tone 
-  {EMF_RANDOM_3, 150, 1},   // Low Tone 
+  {EMF_RANDOM_3, 150, 0},   // Display 
   {EMF_METER_0, 200, 1},    // End Tone  
   {EMF_METER_0, 500, 0},    // Pause  500 ms                            
   {EMF_METER_1, 260, 1},    // Start Tone
   {EMF_METER_2, 150, 1},    // Low Tone 
-  {EMF_RANDOM_3, 150, 1},   // Low Tone 
+  {EMF_RANDOM_3, 150, 0},   // Low Tone 
   {EMF_METER_0, 100, 1},    // End Tone  
 };
 
@@ -307,7 +316,7 @@ emfProg emfProg5 [] = {
 emfProg emfProg6 [] = {
   {EMF_METER_1, 230, 1},    // Start Tone
   {EMF_METER_2, 200, 1},    // Low Tone 
-  {EMF_RANDOM_3, 2000, 1},  // Long Low Tone 
+  {EMF_RANDOM_4, 2000, 1},  // Long Low Tone 
   {EMF_METER_2, 200, 1},    // Low Tone
   {EMF_RANDOM_1, 200, 1},   // Low Tone 
   {EMF_METER_0, 100, 1},    // End Tone  
@@ -402,11 +411,11 @@ emfProg emfProg9 [] = {
   {EMF_METER_1, 150, 1},    // Start Tone
   {EMF_RANDOM_3,100, 0},    // Display only
   {EMF_METER_2, 100, 0},    // Display only
-  {EMF_RANDOM_3, 150, 1},   // Low Tone
+  {EMF_RANDOM_3, 350, 1},   // Low Tone
   {EMF_METER_5, 1200, 1},   // High Tone
   {EMF_METER_2, 250, 0},    // Display only
   {EMF_RANDOM_4, 300, 0},   // Display only                         
-  {EMF_METER_0, 100, 1},     // End Tone
+  {EMF_METER_0, 100, 1},    // End Tone
   {EMF_METER_1, 200, 0}     // Display only
 };
 
@@ -544,9 +553,9 @@ void setup()
 
     #ifdef ATTINY1604
       attinySerial.begin (115200);
-      Serial.println();
-      Serial.println(F("DFPlayer Test"));
-      Serial.println(F("Initializing DFPlayer ... (May take 3~5 seconds)"));
+      attinySerial.println();
+      attinySerial.println(F("DFPlayer Test"));
+      attinySerial.println(F("Initializing DFPlayer ... (May take 3~5 seconds)"));
     #endif
 #else
     #ifdef ATTINY1604
@@ -584,6 +593,19 @@ void setup()
         queryVal = dfpGetVolume();
         Serial.print(F("Params Vol:"));
         Serial.println(queryVal);
+    #endif
+
+    #ifdef ATTINY1604
+      attinySerial.print(F("Audio Level:"));
+      attinySerial.println(emfVolumeLev);
+
+      queryVal = dfpReadQuery(0);
+      attinySerial.print(F("Params Rst:"));
+      attinySerial.println(queryVal, HEX);
+
+      queryVal = dfpGetVolume();
+      attinySerial.print(F("Params Vol:"));
+      attinySerial.println(queryVal);
     #endif
 #endif
 
@@ -623,7 +645,12 @@ void loop()
                 setEMFlevel = EMF_METER_3;
                 analogWrite(meterPin,setEMFlevel);
                 dfpPlayTrackMP3(EMF_TONE_LOW);
-                delay (300);
+                delay (350);  
+                /* Sensitive timing area, delays less than 300 causes DFP issues and needs reset.     */
+                /* Query returns -1 instead of track number, stuck in play mode but no audio.         */
+                /* Only happens with manula mode and if this is the last track played and             */
+                /* prog switch released before entering next while loop.                              */
+                /* Possibly due to playing a sequence of very short mp3 files.                        */
             }
 
             emfTimer = millis();     // MP3 track time
@@ -665,6 +692,7 @@ void loop()
             /* Check volume level */           
 #if defined(NANO) || defined(ATTINY1604)
             queryVal = dfpGetVolume();
+            
             if ((queryVal != emfVolumeLev) && (queryVal <= EMF_MAX_AUDIO_LEVEL)) {
                 /* Update value */
                 emfVolumeLev = queryVal;
@@ -675,7 +703,21 @@ void loop()
             Serial.print (F("New Audio Level: "));
             Serial.println (emfVolumeLev);
         #endif
+
+        #ifdef ATTINY1604
+            attinySerial.print (F("New Audio Level: "));
+            attinySerial.println (emfVolumeLev);
+        #endif
 #endif
+            }
+
+            /* Check for DFP in bad state and reset */
+            queryVal = dfpGetStatus();
+            if (queryVal == 0x201) {
+                dfpReset();
+                delay(1000);
+                dfpSetVolume(emfVolumeLev);
+                dfpSetEq(DFP_EQ_CLASSIC);
             }
 #endif
         } else {
