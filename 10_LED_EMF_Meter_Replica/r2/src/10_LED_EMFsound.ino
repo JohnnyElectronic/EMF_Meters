@@ -7,6 +7,7 @@ Updated serial debug for ATTiny1604
 Bug fix for no audio after manual test press
   - remixed 0002_emf low short, now version 2, slightly longer
   - Added in DFPlayer reset check for no audio
+  - Fixed audio save limits, now also saved in prog mode
 
 Release: 2.0 (Label: EMF / 10r2)
 Initial release for EMF PCB r2
@@ -212,7 +213,7 @@ const int encSw8Pin = ENC_SW8_PIN;
 #define AUDIO_LEVEL_ADDR     0          // Memory address of EMF audio level setting
 #define EMF_AUDIO_LEVEL     20          // Typical 15-20 to start
 #define EMF_MAX_AUDIO_LEVEL 30          // Highest Level
-#define EMF_MIN_AUDIO_LEVEL  4          // Lowest Audible Level
+#define EMF_MIN_AUDIO_LEVEL  2          // Lowest Audible Level
 byte emfVolumeLev = EMF_AUDIO_LEVEL;    // Current or initial DFP volume level for EMF
 int setEMFlevel = 0;                    // Level for EMF meter output
 unsigned long emfTimer = 0;             // Delay timer
@@ -233,6 +234,7 @@ struct emfProg {
   bool sound;
 };
 
+
 // Program with meter level (0-158 | MAX_METER_LVL, 3v max), duration (ms), Sound Enable/Disable
 // EMF_METER_0   - Plays end tone, 0.282s max
 // EMF_METER_1   - Plays start tone, 0.287s max
@@ -245,6 +247,7 @@ struct emfProg {
 
 // Program 1 (Single High/End, also used for intial meter adjustments)
 // 4 steps
+
 emfProg emfProg1 [] = {
   {EMF_METER_1, 230, 1},    // Start Tone
   {EMF_METER_3, 100, 0},    // Display only
@@ -419,7 +422,6 @@ emfProg emfProg9 [] = {
   {EMF_METER_1, 200, 0}     // Display only
 };
 
-
 SoftwareSerial dfpSerial (DFP_RX_PIN, dfpTXpin); // RX, TX
 
 #if defined(DFP_DEBUG) && defined(ATTINY1604)
@@ -569,7 +571,7 @@ void setup()
     // Initial setup for DFPlayer.
     // Sets up DFP_BUSY_PIN if used to use the busy state/pin of the player. 
     // Resets the device and provides a 1 sec delay.
-    dfpSetup(DFP_BUSY_PIN, 1000);
+    dfpSetup(dfpBusyPin, 1100);
 
     emfVolumeLev = EEPROM.read(AUDIO_LEVEL_ADDR);
 
@@ -578,8 +580,8 @@ void setup()
         emfVolumeLev = EMF_AUDIO_LEVEL;   
     }
 
-    dfpSetVolume(emfVolumeLev);
     dfpSetEq(DFP_EQ_CLASSIC);
+    dfpSetVolume(emfVolumeLev);
 
 #ifdef DFP_DEBUG
     #ifdef NANO
@@ -686,40 +688,6 @@ void loop()
             setEMFlevel = 0;
             analogWrite(meterPin,setEMFlevel);
             pinMode(meterPin, INPUT);   // Shut down PWM
-
-            dfpSerialPurge ();    // Prep for volume read
-
-            /* Check volume level */           
-#if defined(NANO) || defined(ATTINY1604)
-            queryVal = dfpGetVolume();
-            
-            if ((queryVal != emfVolumeLev) && (queryVal <= EMF_MAX_AUDIO_LEVEL)) {
-                /* Update value */
-                emfVolumeLev = queryVal;
-                EEPROM.write(AUDIO_LEVEL_ADDR, emfVolumeLev);
-
-#ifdef DFP_DEBUG
-        #ifdef NANO
-            Serial.print (F("New Audio Level: "));
-            Serial.println (emfVolumeLev);
-        #endif
-
-        #ifdef ATTINY1604
-            attinySerial.print (F("New Audio Level: "));
-            attinySerial.println (emfVolumeLev);
-        #endif
-#endif
-            }
-
-            /* Check for DFP in bad state and reset */
-            queryVal = dfpGetStatus();
-            if (queryVal == 0x201) {
-                dfpReset();
-                delay(1000);
-                dfpSetVolume(emfVolumeLev);
-                dfpSetEq(DFP_EQ_CLASSIC);
-            }
-#endif
         } else {
             // Select and run one of the programmed sequences
 #if defined(NANO) || defined(ATTINY1604)
@@ -821,7 +789,46 @@ void loop()
             }
 
             lastProgValue++;
-        } // end else
+        } // end else, program mode
+
+        // Check volume level and DFP state
+        dfpBusyWait(20);
+        dfpSerialPurge ();    // Prep for volume read
+        
+        /* Check volume level */           
+#if defined(NANO) || defined(ATTINY1604)
+        queryVal = dfpGetVolume();
+        if ((queryVal != emfVolumeLev) && (queryVal <= EMF_MAX_AUDIO_LEVEL) && (queryVal >= EMF_MIN_AUDIO_LEVEL)) {
+            /* Update value */
+            emfVolumeLev = queryVal;
+            EEPROM.write(AUDIO_LEVEL_ADDR, emfVolumeLev);
+
+#ifdef DFP_DEBUG
+    #ifdef NANO
+        Serial.print (F("New Audio Level: "));
+        Serial.println (emfVolumeLev);
+    #endif
+
+    #ifdef ATTINY1604
+        attinySerial.print (F("New Audio Level: "));
+        attinySerial.println (emfVolumeLev);
+    #endif
+#endif
+        }
+
+        /* Check for DFP in bad state and reset */
+        queryVal = dfpGetStatus();
+        if (queryVal == 0x201) {
+            /* Player is in play mode, check busy pin and reset if not playing anything. */
+            if (digitalRead(dfpBusyPin)) {
+                dfpReset();
+                delay(1100);
+                dfpSetEq(DFP_EQ_CLASSIC);
+                dfpSetVolume(emfVolumeLev);
+            }
+        }
+#endif
+
     } // if progPin
 } // end loop
 
