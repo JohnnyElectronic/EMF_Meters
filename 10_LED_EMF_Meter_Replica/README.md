@@ -17,7 +17,7 @@ Check out the documents folder for more details.
 
 
 ## Journal Pages Now Available!
-<img src="Journal/10_LED_EMF_Meter_Journal_Page_br.png" width="30%">
+<img src="Journal/10_LED_EMF_Meter_Journal_Page_br_tn.jpg" width="30%">
 
 
 ## Purchasing

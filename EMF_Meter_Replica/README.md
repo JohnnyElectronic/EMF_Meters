@@ -38,8 +38,8 @@ Check out the documents folder for more details.
 
 
 ## Journal Pages Now Available!
-<img src="Journal/EMF_Meter_Journal_Page_cs_br.png" width="30%">
-<img src="Journal/EMF_Schematic2_Journal_Page.png" width="30%">
+<img src="Journal/EMF Meter Journal Page_cs_br_tn.jpg" width="30%">
+<img src="Journal/EMF Schematic Journal Page_tn.jpg" width="30%">
 
 
 
